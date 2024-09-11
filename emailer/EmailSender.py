@@ -3,7 +3,7 @@ import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from jinja2 import Environment, FileSystemLoader
-from database_manager import DatabaseManager
+from DatabaseManager import DatabaseManager
 from .EmailJob import EmailJob
 import time
 from config import Config
