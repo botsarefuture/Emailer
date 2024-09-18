@@ -14,7 +14,7 @@ setup(
     include_package_data=False,  # Include non-Python files (e.g., templates)
     install_requires=[
         "Jinja2>=3.0",
-        "DatabaseManager=0.1"
+        "DatabaseManager==0.1"
     ],
     python_requires=">=3.6",  # Python version requirement
     classifiers=[
