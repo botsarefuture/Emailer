@@ -14,7 +14,7 @@ setup(
     include_package_data=False,  # Include non-Python files (e.g., templates)
     install_requires=[
         "Jinja2>=3.0",
-        'DatabaseManager @ git+https://github.com/botsarefuture/DatabaseManager.git@0.2',    ],
+        'DatabaseManager @ git+https://github.com/botsarefuture/DatabaseManager.git@0.3',    ],
     python_requires=">=3.6",  # Python version requirement
     classifiers=[
         "Programming Language :: Python :: 3",
