@@ -6,8 +6,6 @@ from jinja2 import Environment, FileSystemLoader
 from DatabaseManager import DatabaseManager
 from .EmailJob import EmailJob
 import time
-from config import Config
-
 
 class EmailSender:
     """
@@ -15,14 +13,14 @@ class EmailSender:
     It uses SMTP to send emails and supports templated email content.
     """
 
-    def __init__(self):
+    def __init__(self, config):
         """
         Initializes the EmailSender instance with the Flask app configuration.
 
         Args:
         """
-        self.config = Config()
-        self.db_manager = DatabaseManager()
+        self.config = config
+        self.db_manager = DatabaseManager(config)
         self.db = self.db_manager.get_db()
         self.queue_collection = self.db["email_queue"]
         self.env = Environment(loader=FileSystemLoader("templates/emails"))
