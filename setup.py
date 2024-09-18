@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="emailer",  # Package name
-    version="0.1.2",  # Package version
+    version="0.1.3",  # Package version
     description="A module for managing and sending emails with templating and SMTP queue support",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
