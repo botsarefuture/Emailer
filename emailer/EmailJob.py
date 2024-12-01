@@ -3,50 +3,64 @@ class Sender:
     The Sender class encapsulates the information related to an email sender, including the
     SMTP server details and the sender's email credentials.
 
-    Attributes:
-        email_server (str): The SMTP server address used to send emails.
-        email_port (int): The port to connect to the SMTP server.
-        username (str): The username for authenticating with the SMTP server.
-        password (str): The password for authenticating with the SMTP server.
-        use_tls (bool): A flag indicating whether to use TLS for the SMTP connection.
-        email_address (str): The sender's email address.
+    Attributes
+    ----------
+    email_server : str
+        The SMTP server address used to send emails.
+    email_port : int
+        The port to connect to the SMTP server.
+    username : str
+        The username for authenticating with the SMTP server.
+    password : str
+        The password for authenticating with the SMTP server.
+    use_tls : bool
+        A flag indicating whether to use TLS for the SMTP connection.
+    email_address : str
+        The sender's email address.
     """
 
-    def __init__(
-        self, email_server, email_port, username, password, use_tls, email_address
-    ):
+    def __init__(self, email_server, email_port, username, password, use_tls, email_address):
         """
         Initializes a new Sender instance with the given SMTP and sender details.
 
-        Args:
-            email_server (str): The SMTP server address.
-            email_port (int): The port to connect to the SMTP server.
-            username (str): The username for SMTP authentication.
-            password (str): The password for SMTP authentication.
-            use_tls (bool): Whether to use TLS for the SMTP connection.
-            email_address (str): The sender's email address.
+        Parameters
+        ----------
+        email_server : str
+            The SMTP server address.
+        email_port : int
+            The port to connect to the SMTP server.
+        username : str
+            The username for SMTP authentication.
+        password : str
+            The password for SMTP authentication.
+        use_tls : bool
+            Whether to use TLS for the SMTP connection.
+        email_address : str
+            The sender's email address.
         """
-        self.email_server = email_server
-        self.email_port = email_port
-        self.username = username
-        self.password = password
-        self.use_tls = use_tls
-        self.email_address = email_address
+        self._email_server = email_server
+        self._email_port = email_port
+        self._username = username
+        self._password = password
+        self._use_tls = use_tls
+        self._email_address = email_address
 
     def to_dict(self):
         """
         Converts the Sender instance to a dictionary format.
 
-        Returns:
-            dict: A dictionary containing the sender information.
+        Returns
+        -------
+        dict
+            A dictionary containing the sender information.
         """
         return {
-            "email_server": self.email_server,
-            "email_port": self.email_port,
-            "username": self.username,
-            "password": self.password,  # Note: Be careful with storing passwords!
-            "use_tls": self.use_tls,
-            "email_address": self.email_address,
+            "email_server": self._email_server,
+            "email_port": self._email_port,
+            "username": self._username,
+            "password": self._password,  # Note: Be careful with storing passwords!
+            "use_tls": self._use_tls,
+            "email_address": self._email_address,
         }
 
     @classmethod
@@ -54,11 +68,15 @@ class Sender:
         """
         Creates a Sender instance from a dictionary.
 
-        Args:
-            data (dict): A dictionary containing sender information.
+        Parameters
+        ----------
+        data : dict
+            A dictionary containing sender information.
 
-        Returns:
-            Sender: An instance of the Sender class.
+        Returns
+        -------
+        Sender
+            An instance of the Sender class.
         """
         return cls(
             email_server=data.get("email_server"),
@@ -74,44 +92,58 @@ class EmailJob:
     """
     The EmailJob class represents an email task, encapsulating all the details required to send an email.
 
-    Attributes:
-        subject (str): The subject line of the email.
-        recipients (list[str]): A list of recipient email addresses.
-        body (str, optional): The plain text body of the email.
-        html (str, optional): The HTML content of the email.
-        sender (Sender, optional): An instance of the Sender class containing the sender's information. Defaults to None.
+    Attributes
+    ----------
+    subject : str
+        The subject line of the email.
+    recipients : list of str
+        A list of recipient email addresses.
+    body : str, optional
+        The plain text body of the email.
+    html : str, optional
+        The HTML content of the email.
+    sender : Sender, optional
+        An instance of the Sender class containing the sender's information. Defaults to None.
     """
 
     def __init__(self, subject, recipients, body=None, html=None, sender=None):
         """
         Initializes an EmailJob instance with the provided details.
 
-        Args:
-            subject (str): The subject of the email.
-            recipients (list[str]): A list of recipient email addresses.
-            body (str, optional): The plain text body of the email. Defaults to None.
-            html (str, optional): The HTML content of the email. Defaults to None.
-            sender (Sender, optional): An instance of the Sender class. Defaults to None.
+        Parameters
+        ----------
+        subject : str
+            The subject of the email.
+        recipients : list of str
+            A list of recipient email addresses.
+        body : str, optional
+            The plain text body of the email. Defaults to None.
+        html : str, optional
+            The HTML content of the email. Defaults to None.
+        sender : Sender, optional
+            An instance of the Sender class. Defaults to None.
         """
-        self.subject = subject
-        self.recipients = recipients
-        self.body = body
-        self.html = html
-        self.sender = sender  # Store a Sender instance if provided
+        self._subject = subject
+        self._recipients = recipients
+        self._body = body
+        self._html = html
+        self._sender = sender  # Store a Sender instance if provided
 
     def to_dict(self):
         """
         Converts the EmailJob instance to a dictionary format for storage in a database.
 
-        Returns:
-            dict: A dictionary representation of the EmailJob instance.
+        Returns
+        -------
+        dict
+            A dictionary representation of the EmailJob instance.
         """
         return {
-            "subject": self.subject,
-            "recipients": self.recipients,
-            "body": self.body,
-            "html": self.html,
-            "sender": self.sender.to_dict() if self.sender else None,
+            "subject": self._subject,
+            "recipients": self._recipients,
+            "body": self._body,
+            "html": self._html,
+            "sender": self._sender.to_dict() if self._sender else None,
         }
 
     @classmethod
@@ -119,11 +151,15 @@ class EmailJob:
         """
         Creates an EmailJob instance from a dictionary.
 
-        Args:
-            data (dict): A dictionary containing email job details.
+        Parameters
+        ----------
+        data : dict
+            A dictionary containing email job details.
 
-        Returns:
-            EmailJob: An instance of the EmailJob class.
+        Returns
+        -------
+        EmailJob
+            An instance of the EmailJob class.
         """
         sender_data = data.get("sender")
         sender = Sender.from_dict(sender_data) if sender_data else None

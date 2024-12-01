@@ -18,12 +18,12 @@ The `Sender` class holds SMTP server details and authentication credentials for 
 
 ### Attributes
 
-- **email_server** (`str`): The SMTP server address.
-- **email_port** (`int`): The port number for the SMTP server.
-- **username** (`str`): The username for SMTP authentication.
-- **password** (`str`): The password for SMTP authentication.
-- **use_tls** (`bool`): Whether to use TLS for the SMTP connection.
-- **email_address** (`str`): The sender's email address.
+- **_email_server** (`str`): The SMTP server address.
+- **_email_port** (`int`): The port number for the SMTP server.
+- **_username** (`str`): The username for SMTP authentication.
+- **_password** (`str`): The password for SMTP authentication.
+- **_use_tls** (`bool`): Whether to use TLS for the SMTP connection.
+- **_email_address** (`str`): The sender's email address.
 
 ### Methods
 
@@ -31,7 +31,7 @@ The `Sender` class holds SMTP server details and authentication credentials for 
 
 Initialize the `Sender` instance with SMTP server and authentication details.
 
-- **Arguments**:
+- **Parameters**:
   - `email_server` (`str`): SMTP server address.
   - `email_port` (`int`): Port number for the SMTP connection.
   - `username` (`str`): Username for SMTP authentication.
@@ -50,7 +50,7 @@ Convert the `Sender` instance to a dictionary.
 
 Create a `Sender` instance from a dictionary.
 
-- **Arguments**:
+- **Parameters**:
   - `data` (`dict`): Dictionary with sender details.
 
 - **Returns**:
@@ -66,11 +66,11 @@ The `EmailJob` class represents an email task, encapsulating information such as
 
 ### Attributes
 
-- **subject** (`str`): The subject line of the email.
-- **recipients** (`list[str]`): List of recipient email addresses.
-- **body** (`str`, optional): Plain text email content.
-- **html** (`str`, optional): HTML email content.
-- **sender** (`Sender`, optional): The sender details.
+- **_subject** (`str`): The subject line of the email.
+- **_recipients** (`list[str]`): List of recipient email addresses.
+- **_body** (`str`, optional): Plain text email content.
+- **_html** (`str`, optional): HTML email content.
+- **_sender** (`Sender`, optional): The sender details.
 
 ### Methods
 
@@ -78,7 +78,7 @@ The `EmailJob` class represents an email task, encapsulating information such as
 
 Initialize an `EmailJob` instance with email details.
 
-- **Arguments**:
+- **Parameters**:
   - `subject` (`str`): Subject of the email.
   - `recipients` (`list[str]`): List of recipient email addresses.
   - `body` (`str`, optional): Plain text email content.
@@ -96,7 +96,7 @@ Convert the `EmailJob` instance to a dictionary.
 
 Create an `EmailJob` instance from a dictionary.
 
-- **Arguments**:
+- **Parameters**:
   - `data` (`dict`): Dictionary with email job details.
 
 - **Returns**:
@@ -112,17 +112,20 @@ The `EmailSender` class handles the process of sending emails, either directly o
 
 ### Attributes
 
-- **config** (`Config`): Configuration for SMTP and email settings.
-- **db_manager** (`DatabaseManager`): Manages database connections.
-- **db** (`Database`): MongoDB database connection.
-- **queue_collection** (`Collection`): MongoDB collection for storing email jobs.
-- **env** (`Environment`): Jinja2 environment for rendering email templates.
+- **_config** (`Config`): Configuration for SMTP and email settings.
+- **_db_manager** (`DatabaseManager`): Manages database connections.
+- **_db** (`Database`): MongoDB database connection.
+- **_queue_collection** (`Collection`): MongoDB collection for storing email jobs.
+- **_env** (`Environment`): Jinja2 environment for rendering email templates.
 
 ### Methods
 
-#### `__init__()`
+#### `__init__(config)`
 
 Initialize an `EmailSender` instance with Flask configuration, database connection, and email templates.
+
+- **Parameters**:
+  - `config` (`dict`): The configuration dictionary for the email sender.
 
 #### `start_worker()`
 
@@ -136,14 +139,14 @@ Continuously process email jobs from the queue and send them. The queue is check
 
 Send an email using the details from an `EmailJob` instance.
 
-- **Arguments**:
+- **Parameters**:
   - `email_job` (`EmailJob`): Instance of `EmailJob` containing email details.
 
 #### `queue_email(template_name, subject, recipients, context, sender=None)`
 
 Queue an email for sending using a Jinja2 template and context variables.
 
-- **Arguments**:
+- **Parameters**:
   - `template_name` (`str`): Name of the Jinja2 template file.
   - `subject` (`str`): Subject of the email.
   - `recipients` (`list[str]`): List of recipient email addresses.
@@ -154,7 +157,7 @@ Queue an email for sending using a Jinja2 template and context variables.
 
 Send an email immediately without queueing, using a Jinja2 template and context variables.
 
-- **Arguments**:
+- **Parameters**:
   - `template_name` (`str`): Name of the Jinja2 template file.
   - `subject` (`str`): Subject of the email.
   - `recipients` (`list[str]`): List of recipient email addresses.

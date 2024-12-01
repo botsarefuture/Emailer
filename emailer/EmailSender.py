@@ -17,13 +17,16 @@ class EmailSender:
         """
         Initializes the EmailSender instance with the Flask app configuration.
 
-        Args:
+        Parameters
+        ----------
+        config : dict
+            The configuration dictionary for the email sender.
         """
-        self.config = config
-        self.db_manager = DatabaseManager(config)
-        self.db = self.db_manager.get_db()
-        self.queue_collection = self.db["email_queue"]
-        self.env = Environment(loader=FileSystemLoader("templates/emails"))
+        self._config = config
+        self._db_manager = DatabaseManager(config)
+        self._db = self._db_manager.get_db()
+        self._queue_collection = self._db["email_queue"]
+        self._env = Environment(loader=FileSystemLoader("templates/emails"))
         self.start_worker()
 
     def start_worker(self):
@@ -39,7 +42,7 @@ class EmailSender:
         Continuously processes email jobs from the queue and sends them.
         """
         while True:
-            email_job_data = self.queue_collection.find_one_and_delete({})
+            email_job_data = self._queue_collection.find_one_and_delete({})
             if email_job_data:
                 email_job = EmailJob.from_dict(email_job_data)
                 self.send_email(email_job)
@@ -49,8 +52,10 @@ class EmailSender:
         """
         Sends an email using the details from the EmailJob instance.
 
-        Args:
-            email_job (EmailJob): The EmailJob instance containing the email details.
+        Parameters
+        ----------
+        email_job : EmailJob
+            The EmailJob instance containing the email details.
         """
         try:
             # Determine SMTP settings and sender information
@@ -62,13 +67,13 @@ class EmailSender:
                 smtp_password = email_job.sender.password
                 use_tls = email_job.sender.use_tls
             else:
-                sender_address = self.config.MAIL_DEFAULT_SENDER
-                smtp_server = self.config.MAIL_SERVER
-                smtp_port = self.config.MAIL_PORT
-                smtp_username = self.config.MAIL_USERNAME
-                smtp_password = self.config.MAIL_PASSWORD
+                sender_address = self._config.MAIL_DEFAULT_SENDER
+                smtp_server = self._config.MAIL_SERVER
+                smtp_port = self._config.MAIL_PORT
+                smtp_username = self._config.MAIL_USERNAME
+                smtp_password = self._config.MAIL_PASSWORD
                 use_tls = (
-                    self.config.MAIL_USE_TLS or True
+                    self._config.MAIL_USE_TLS or True
                 )  # Default to True if not specified
 
             msg = MIMEMultipart("alternative")
@@ -96,32 +101,44 @@ class EmailSender:
         """
         Queues an email for sending using the provided template and context.
 
-        Args:
-            template_name (str): The name of the email template file.
-            subject (str): The subject of the email.
-            recipients (list[str]): A list of recipient email addresses.
-            context (dict): A dictionary of context variables to render the email template.
-            sender (Sender, optional): An instance of the Sender class. Defaults to None.
+        Parameters
+        ----------
+        template_name : str
+            The name of the email template file.
+        subject : str
+            The subject of the email.
+        recipients : list of str
+            A list of recipient email addresses.
+        context : dict
+            A dictionary of context variables to render the email template.
+        sender : Sender, optional
+            An instance of the Sender class. Defaults to None.
         """
-        template = self.env.get_template(template_name)
+        template = self._env.get_template(template_name)
         body = template.render(context)
         email_job = EmailJob(
             subject=subject, recipients=recipients, body=body, html=body, sender=sender
         )
-        self.queue_collection.insert_one(email_job.to_dict())
+        self._queue_collection.insert_one(email_job.to_dict())
 
     def send_now(self, template_name, subject, recipients, context, sender=None):
         """
         Sends an email immediately using the provided template and context.
 
-        Args:
-            template_name (str): The name of the email template file.
-            subject (str): The subject of the email.
-            recipients (list[str]): A list of recipient email addresses.
-            context (dict): A dictionary of context variables to render the email template.
-            sender (Sender, optional): An instance of the Sender class. Defaults to None.
+        Parameters
+        ----------
+        template_name : str
+            The name of the email template file.
+        subject : str
+            The subject of the email.
+        recipients : list of str
+            A list of recipient email addresses.
+        context : dict
+            A dictionary of context variables to render the email template.
+        sender : Sender, optional
+            An instance of the Sender class. Defaults to None.
         """
-        template = self.env.get_template(template_name)
+        template = self._env.get_template(template_name)
         body = template.render(context)
         email_job = EmailJob(
             subject=subject, recipients=recipients, body=body, html=body, sender=sender
