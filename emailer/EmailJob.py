@@ -1,3 +1,15 @@
+def config_sender_converter(config):
+    """Function to fetch the default sender configuration from the app configuration."""
+    return {
+        "email_server": config.get("EMAIL_SERVER"),
+        "email_port": config.get("EMAIL_PORT"),
+        "username": config.get("EMAIL_USERNAME"),
+        "password": config.get("EMAIL_PASSWORD"),
+        "use_tls": config.get("EMAIL_USE_TLS"),
+        "email_address": config.get("EMAIL_ADDRESS"),
+        "display_name": config.get("EMAIL_DISPLAY_NAME"),
+    }
+
 class Sender:
     """
     The Sender class encapsulates the information related to an email sender, including the
@@ -17,9 +29,11 @@ class Sender:
         A flag indicating whether to use TLS for the SMTP connection.
     email_address : str
         The sender's email address.
+    display_name : str
+        The display name of the sender.
     """
 
-    def __init__(self, email_server, email_port, username, password, use_tls, email_address):
+    def __init__(self, email_server, email_port, username, password, use_tls, email_address, display_name=None):
         """
         Initializes a new Sender instance with the given SMTP and sender details.
 
@@ -37,6 +51,8 @@ class Sender:
             Whether to use TLS for the SMTP connection.
         email_address : str
             The sender's email address.
+        display_name : str, optional
+            The display name of the sender. Defaults to None.
         """
         self._email_server = email_server
         self._email_port = email_port
@@ -44,6 +60,7 @@ class Sender:
         self._password = password
         self._use_tls = use_tls
         self._email_address = email_address
+        self._display_name = display_name
 
     def to_dict(self):
         """
@@ -61,7 +78,22 @@ class Sender:
             "password": self._password,  # Note: Be careful with storing passwords!
             "use_tls": self._use_tls,
             "email_address": self._email_address,
+            "display_name": self._display_name,
         }
+
+    def get_sender_address(self):
+        """
+        Constructs the sender address including the display name if it exists.
+
+        Returns
+        -------
+        str
+            The sender address in the format "Display Name <email_address>" if display name exists,
+            otherwise just the email address.
+        """
+        if self._display_name:
+            return f"{self._display_name} <{self._email_address}>"
+        return self._email_address
 
     @classmethod
     def from_dict(cls, data):
@@ -85,6 +117,7 @@ class Sender:
             password=data.get("password"),  # Make sure passwords are handled securely!
             use_tls=data.get("use_tls"),
             email_address=data.get("email_address"),
+            display_name=data.get("display_name"),
         )
 
 

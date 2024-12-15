@@ -1,12 +1,116 @@
-# `emailer` Module Documentation
+# Emailer Library
 
-## Overview
+The `emailer` library provides functionality for sending emails using Flask and Jinja2 templates. It includes classes for managing email jobs, sending emails asynchronously, and queuing email tasks for later processing.
 
-The `emailer` module is responsible for managing and sending emails via SMTP. It includes three primary classes:
+---
 
-- `Sender`: Encapsulates SMTP server and sender information.
-- `EmailJob`: Represents a single email task with subject, recipients, and content.
-- `EmailSender`: Handles sending emails and processes email jobs from a queue in a background thread.
+## Installation
+
+To install the `emailer` library, run the following command:
+
+```bash
+pip install git+https://github.com/botsarefuture/emailer.git
+```
+
+---
+
+## Features
+
+- Asynchronous email sending with a background worker.
+- Support for templated emails using Jinja2.
+- Queueing system to handle email tasks efficiently.
+- Customizable sender configurations.
+
+---
+
+## Usage
+
+### Initialization
+
+Create an instance of `EmailSender` by providing your application configuration:
+
+```python
+from emailer.EmailSender import EmailSender
+
+config = {
+    "MAIL_SERVER": "smtp.example.com",
+    "MAIL_PORT": 587,
+    "MAIL_USERNAME": "your_username",
+    "MAIL_PASSWORD": "your_password",
+    "MAIL_USE_TLS": True,
+    "MAIL_DEFAULT_SENDER": "noreply@example.com",
+    "DB_URI": "mongodb://localhost:27017/email_db"
+}
+
+email_sender = EmailSender(config)
+```
+
+---
+
+## Methods
+
+### `__init__(config)`
+
+Initialize an `EmailSender` instance with Flask configuration, database connection, and email templates.
+
+- **Parameters**:
+  - `config` (`dict`): The configuration dictionary for the email sender.
+
+---
+
+### `start_worker()`
+
+Start a background thread to process the email job queue.
+
+> **Note:**
+> This is automatically called when the `EmailSender` instance is created.
+
+---
+
+### `process_queue()`
+
+Continuously process email jobs from the queue and send them. The queue is checked every 5 seconds.
+
+> **Note:**
+> This method is called by the background worker thread.
+
+---
+
+### `send_email(email_job)`
+
+Send an email using the details from an `EmailJob` instance.
+
+- **Parameters**:
+  - `email_job` (`EmailJob`): Instance of `EmailJob` containing email details.
+
+---
+
+### `queue_email(template_name, subject, recipients, context, sender=None)`
+
+Queue an email for sending using a Jinja2 template and context variables.
+
+- **Parameters**:
+  - `template_name` (`str`): Name of the Jinja2 template file.
+  - `subject` (`str`): Subject of the email.
+  - `recipients` (`list[str]`): List of recipient email addresses.
+  - `context` (`dict`): Context variables for rendering the email template.
+  - `sender` (`Sender`, optional): Optional sender details.
+
+> **Note:**
+> Use this instead of `send_now` to send emails efficiently.
+
+---
+
+### `send_now(template_name, subject, recipients, context, sender=None)`
+
+Send an email immediately without queueing, using a Jinja2 template and context variables.
+
+- **Parameters**:
+  - `template_name` (`str`): Name of the Jinja2 template file.
+  - `subject` (`str`): Subject of the email.
+  - `recipients` (`list[str]`): List of recipient email addresses.
+  - `context` (`dict`): Context variables for rendering the email template.
+  - `sender` (`Sender`, optional): Optional sender details.
 
 ---
 
@@ -24,10 +128,11 @@ The `Sender` class holds SMTP server details and authentication credentials for 
 - **_password** (`str`): The password for SMTP authentication.
 - **_use_tls** (`bool`): Whether to use TLS for the SMTP connection.
 - **_email_address** (`str`): The sender's email address.
+- **_display_name** (`str`): The display name of the sender.
 
 ### Methods
 
-#### `__init__(email_server, email_port, username, password, use_tls, email_address)`
+#### `__init__(email_server, email_port, username, password, use_tls, email_address, display_name=None)`
 
 Initialize the `Sender` instance with SMTP server and authentication details.
 
@@ -38,6 +143,9 @@ Initialize the `Sender` instance with SMTP server and authentication details.
   - `password` (`str`): Password for SMTP authentication.
   - `use_tls` (`bool`): Flag to use TLS.
   - `email_address` (`str`): Sender's email address.
+  - `display_name` (`str`, optional): Display name of the sender.
+
+---
 
 #### `to_dict()`
 
@@ -45,6 +153,8 @@ Convert the `Sender` instance to a dictionary.
 
 - **Returns**:
   - `dict`: A dictionary containing the sender's details.
+
+---
 
 #### `from_dict(data)`
 
@@ -85,12 +195,16 @@ Initialize an `EmailJob` instance with email details.
   - `html` (`str`, optional): HTML email content.
   - `sender` (`Sender`, optional): Sender details.
 
+---
+
 #### `to_dict()`
 
 Convert the `EmailJob` instance to a dictionary.
 
 - **Returns**:
   - `dict`: A dictionary representation of the email job.
+
+---
 
 #### `from_dict(data)`
 
@@ -104,110 +218,43 @@ Create an `EmailJob` instance from a dictionary.
 
 ---
 
-## Class: `EmailSender`
+## Logging
 
-### Description
-
-The `EmailSender` class handles the process of sending emails, either directly or by queueing email jobs for background processing.
-
-### Attributes
-
-- **_config** (`Config`): Configuration for SMTP and email settings.
-- **_db_manager** (`DatabaseManager`): Manages database connections.
-- **_db** (`Database`): MongoDB database connection.
-- **_queue_collection** (`Collection`): MongoDB collection for storing email jobs.
-- **_env** (`Environment`): Jinja2 environment for rendering email templates.
-
-### Methods
-
-#### `__init__(config)`
-
-Initialize an `EmailSender` instance with Flask configuration, database connection, and email templates.
-
-- **Parameters**:
-  - `config` (`dict`): The configuration dictionary for the email sender.
-
-#### `start_worker()`
-
-Start a background thread to process the email job queue.
-
-#### `process_queue()`
-
-Continuously process email jobs from the queue and send them. The queue is checked every 5 seconds.
-
-#### `send_email(email_job)`
-
-Send an email using the details from an `EmailJob` instance.
-
-- **Parameters**:
-  - `email_job` (`EmailJob`): Instance of `EmailJob` containing email details.
-
-#### `queue_email(template_name, subject, recipients, context, sender=None)`
-
-Queue an email for sending using a Jinja2 template and context variables.
-
-- **Parameters**:
-  - `template_name` (`str`): Name of the Jinja2 template file.
-  - `subject` (`str`): Subject of the email.
-  - `recipients` (`list[str]`): List of recipient email addresses.
-  - `context` (`dict`): Context variables for rendering the email template.
-  - `sender` (`Sender`, optional): Optional sender details.
-
-#### `send_now(template_name, subject, recipients, context, sender=None)`
-
-Send an email immediately without queueing, using a Jinja2 template and context variables.
-
-- **Parameters**:
-  - `template_name` (`str`): Name of the Jinja2 template file.
-  - `subject` (`str`): Subject of the email.
-  - `recipients` (`list[str]`): List of recipient email addresses.
-  - `context` (`dict`): Context variables for rendering the email template.
-  - `sender` (`Sender`, optional): Optional sender details.
-
----
-
-## Example Usage
-
-### Queueing an Email
+Logging is used to track the status and errors of email sending tasks. Configure the logger in your application to view debug and error messages:
 
 ```python
-email_sender = EmailSender()
+import logging
 
-context = {
-    "username": "John Doe",
-    "event": "Weekly Meeting"
-}
-
-email_sender.queue_email(
-    template_name="reminder_email.html",
-    subject="Meeting Reminder",
-    recipients=["user1@example.com", "user2@example.com"],
-    context=context
-)
-```
-
-### Sending an Email Immediately
-
-```python
-email_sender = EmailSender()
-
-context = {
-    "username": "John Doe",
-    "event": "Weekly Meeting"
-}
-
-email_sender.send_now(
-    template_name="reminder_email.html",
-    subject="Meeting Reminder",
-    recipients=["user1@example.com", "user2@example.com"],
-    context=context
-)
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 ```
 
 ---
 
-## Key Points
+## Templates
 
-- **Background Processing**: `EmailSender` can process emails asynchronously using a queue.
-- **Template Support**: It supports templated emails with Jinja2.
-- **Error Handling**: The system catches and logs errors for troubleshooting.
+Place your email templates in the `templates/emails/` directory. Use Jinja2 syntax to create dynamic email content.
+
+Example:
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ subject }}</title>
+</head>
+<body>
+    <p>Hello {{ name }},</p>
+    <p>Thank you for signing up!</p>
+</body>
+</html>
+```
+
+---
+
+## Notes
+
+- Ensure your MongoDB server is running for the email queue to function.
+- Default sender details must be configured in the application config if not provided for each email.
+- The `EmailSender` class uses threading for background processing, ensuring non-blocking operations.
+
