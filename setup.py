@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="emailer",  # Package name
-    version="0.3.0",  # Bumped up package version
+    version="0.3.1",  # Bumped up package version
     description="A module for managing and sending emails with templating and SMTP queue support",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
@@ -14,7 +14,7 @@ setup(
     include_package_data=True,  # Include non-Python files (e.g., templates)
     install_requires=[
         "Jinja2>=3.0",
-        'DatabaseManager @ git+https://github.com/botsarefuture/DatabaseManager.git@0.3'
+        'DatabaseManager @ git+https://github.com/botsarefuture/DatabaseManager.git@v1.2.0'
     ],
     python_requires=">=3.6",  # Python version requirement
     classifiers=[
