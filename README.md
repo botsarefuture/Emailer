@@ -257,4 +257,3 @@ Example:
 - Ensure your MongoDB server is running for the email queue to function.
 - Default sender details must be configured in the application config if not provided for each email.
 - The `EmailSender` class uses threading for background processing, ensuring non-blocking operations.
-

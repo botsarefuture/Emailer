@@ -92,7 +92,9 @@ class Sender:
             otherwise just the email address.
         """
         if self._display_name:
-            return f"{self._display_name} <{self._email_address}>"
+            from email.header import Header
+            encoded_display_name = str(Header(self._display_name, 'utf-8'))
+            return f"{encoded_display_name} <{self._email_address}>"
         return self._email_address
 
     @classmethod
@@ -139,7 +141,7 @@ class EmailJob:
         An instance of the Sender class containing the sender's information. Defaults to None.
     """
 
-    def __init__(self, subject, recipients, body=None, html=None, sender=None):
+    def __init__(self, subject, recipients, body=None, html=None, sender=None, extra_headers=None):
         """
         Initializes an EmailJob instance with the provided details.
 
@@ -161,6 +163,7 @@ class EmailJob:
         self._body = body
         self._html = html
         self._sender = sender  # Store a Sender instance if provided
+        self._extra_headers = extra_headers
 
     def to_dict(self):
         """
@@ -177,6 +180,7 @@ class EmailJob:
             "body": self._body,
             "html": self._html,
             "sender": self._sender.to_dict() if self._sender else None,
+            "extra_headers": self._extra_headers,
         }
 
     @classmethod
@@ -202,4 +206,5 @@ class EmailJob:
             body=data.get("body"),
             html=data.get("html"),
             sender=sender,
+            extra_headers=data.get("extra_headers"),
         )
