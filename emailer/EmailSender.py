@@ -1,16 +1,23 @@
 import threading
 import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from jinja2 import Environment, FileSystemLoader
+from DatabaseManager import DatabaseManager
+from .EmailJob import EmailJob, Sender
 import time
+from datetime import datetime
 import logging
+
+logger = logging.getLogger(__name__)
+
+import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.utils import formataddr
 from email.header import Header
-from jinja2 import Environment, FileSystemLoader
-from DatabaseManager import DatabaseManager
-from .EmailJob import EmailJob, Sender
+import logging
 
-# Set up logger
 logger = logging.getLogger(__name__)
 
 def fix_from_header(from_address):
@@ -27,18 +34,25 @@ def fix_from_header(from_address):
     str
         The properly formatted 'From' header.
     """
+    logger.debug(f"fix_from_header called with from_address: {from_address}")
     if from_address is None:
         return None
 
     # Handle the potential case where the 'From' address contains special characters or needs encoding
-    name, address = from_address.split("<")
-    address = address.replace(">", "")
+    if "<" in from_address and ">" in from_address:
+        name, address = from_address.split("<")
+        address = address.replace(">", "")
+    else:
+        name = ""
+        address = from_address
     
     # Fix encoding if necessary
     name = name.strip()
     name_header = Header(name, "utf-8").encode()
 
-    return formataddr((name_header, address))
+    fixed_address = formataddr((name_header, address))
+    logger.debug(f"Fixed 'From' address: {fixed_address}")
+    return fixed_address
 
 
 class EmailSender:
@@ -47,7 +61,7 @@ class EmailSender:
     It uses SMTP to send emails and supports templated email content.
     """
 
-    def __init__(self, config):
+    def __init__(self, config, _config_2=None):
         """
         Initializes the EmailSender instance with the Flask app configuration.
 
@@ -56,12 +70,16 @@ class EmailSender:
         config : dict
             The configuration dictionary for the email sender.
         """
-        self._config = config
+        logger.debug(f"Initializing EmailSender with config: {config}")
+        self._config = _config_2
+        if self._config is None:
+            self._config = {}
         print(config)
         self._db_manager = DatabaseManager(config).get_instance()
         self._db = self._db_manager.get_db()
         self._queue_collection = self._db["email_queue"]
         self._env = Environment(loader=FileSystemLoader("templates/emails"))
+        
         
         if self._config.get("MAIL_DEFAULT_SENDER"):
             logger.info("Using default sender information from configuration.")
@@ -76,9 +94,8 @@ class EmailSender:
         else:
             logger.warning("No default sender information found in configuration.")
             self.default_sender = None
-
+        
         self.register_filter()
-
         self.start_worker()
 
     def start_worker(self):
@@ -95,25 +112,16 @@ class EmailSender:
         Continuously processes email jobs from the queue and sends them.
         """
         while True:
+            logger.debug("Checking email queue for jobs.")
             email_job_data = self._queue_collection.find_one_and_delete({})
             if email_job_data:
                 logger.info("Processing email job from queue.")
                 email_job = EmailJob.from_dict(email_job_data)
                 self.send_email(email_job)
+                logger.info("Processed.")
             else:
                 logger.debug("No email job found in queue.")
             time.sleep(5)  # Sleep for 5 seconds before checking the queue again
-
-    def register_filter(self):
-        def format_date(value):
-            if isinstance(value, datetime):
-                return value.strftime('%Y-%m-%d')  # Change format as needed
-            
-            return value
-
-        # Register the custom filter with Jinja2
-        self._env.filters['date'] = format_date
-    
 
     def send_email(self, email_job, send=True):
         """
@@ -131,6 +139,7 @@ class EmailSender:
         RFC 822 section 6.1: https://datatracker.ietf.org/doc/html/rfc822.html#section-6.1
             This explains what kind of value can be used for the "From" field in an email.
         """
+        logger.debug(f"send_email called with email_job: {email_job}, send: {send}")
         try:
             # Determine SMTP settings and sender information
             sender = email_job._sender 
@@ -147,44 +156,60 @@ class EmailSender:
             # Fix the 'From' header before assigning it
             fixed_from = fix_from_header(sender.get_sender_address())
             msg["From"] = fixed_from
-            print(msg["From"])  # For debugging purposes
+            logger.debug(f"Email 'From' header set to: {msg['From']}")
             
             msg["To"] = ", ".join(email_job._recipients)
+            logger.debug(f"Email 'To' header set to: {msg['To']}")
             
             # Add extra headers if provided, e.g., Reply-To
             if email_job._extra_headers:
                 for key, value in email_job._extra_headers.items():
                     msg[key] = value
+                    logger.debug(f"Added extra header: {key} = {value}")
 
             # Attach the body (plain or HTML)
             if email_job._body:
                 msg.attach(MIMEText(email_job._body, "plain"))
+                logger.debug("Attached plain text body to email.")
                 
             if email_job._html:
                 msg.attach(MIMEText(email_job._html, "html"))
+                logger.debug("Attached HTML body to email.")
 
             # Send the email using SMTP
             with smtplib.SMTP(sender._email_server, sender._email_port) as server:
                 if sender._use_tls:
                     server.starttls()
+                    logger.debug("Started TLS for SMTP connection.")
                 server.login(sender._username, sender._password)
+                logger.debug("Logged into SMTP server.")
                 
                 # Convert message to string
                 msg_string = msg.as_string(unixfrom=False)
+                logger.debug(f"Email message string: {msg_string}")
                 
                 # Optionally write the email to a file for debugging
                 with open("email.txt", "w") as f:
                     f.write(msg_string)
+                    logger.debug("Wrote email message to email.txt for debugging.")
 
                 # Send the email
                 server.sendmail(sender._username, email_job._recipients, msg_string)
-            
-            logger.debug(f"Email sent to {email_job._recipients}")
+                logger.debug(f"Email sent to {email_job._recipients}")
 
         except Exception as e:
             logger.error(f"Failed to send email: {str(e)}")
             # Optionally, requeue the email or log the error
 
+    def register_filter(self, filter):
+        def format_date(value):
+            if isinstance(value, datetime):
+                return value.strftime('%Y-%m-%d')  # Change format as needed
+            return value
+
+        # Register the custom filter with Jinja2
+        self._env.filters['date'] = format_date
+    
     def queue_email(self, template_name, subject, recipients, context, sender=None, extra_headers=None, send=True):
         """
         Queues an email for sending using the provided template and context.
@@ -206,6 +231,7 @@ class EmailSender:
         send : bool, optional
             If False, the email will not be sent. Defaults to True.
         """
+        logger.debug(f"queue_email called with template_name: {template_name}, subject: {subject}, recipients: {recipients}, context: {context}, sender: {sender}, extra_headers: {extra_headers}, send: {send}")
         template = self._env.get_template(template_name)
         body = template.render(context)
         email_job = EmailJob(
@@ -238,6 +264,7 @@ class EmailSender:
         send : bool, optional
             If False, the email will not be sent. Defaults to True.
         """
+        logger.debug(f"send_now called with template_name: {template_name}, subject: {subject}, recipients: {recipients}, context: {context}, sender: {sender}, extra_headers: {extra_headers}, send: {send}")
         template = self._env.get_template(template_name)
         body = template.render(context)
         email_job = EmailJob(
@@ -248,3 +275,23 @@ class EmailSender:
             logger.debug(f"Sent email to {recipients} with subject '{subject}'")
         else:
             logger.debug(f"Dry run: Email to {recipients} with subject '{subject}' not sent")
+
+
+    def _die_when_done(self):
+        """
+        Waits for the email queue to become empty before stopping 
+        the email queue worker thread.
+
+        This method periodically checks if the email queue is empty. 
+        Once there are no email jobs left, it exits the application.
+
+        Returns
+        -------
+        None
+        """
+        logger.info("Waiting for the email queue to become empty before stopping the worker thread.")
+        while self._queue_collection.count_documents({}) > 0:
+            logger.debug("Email queue is not empty yet. Waiting...")
+            time.sleep(1)
+        logger.info("Email queue is empty. Stopping the worker thread.")
+        exit(0)
