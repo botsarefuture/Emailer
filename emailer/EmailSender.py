@@ -201,7 +201,7 @@ class EmailSender:
             logger.error(f"Failed to send email: {str(e)}")
             # Optionally, requeue the email or log the error
 
-    def register_filter(self, filter):
+    def register_filter(self):
         def format_date(value):
             if isinstance(value, datetime):
                 return value.strftime('%Y-%m-%d')  # Change format as needed
