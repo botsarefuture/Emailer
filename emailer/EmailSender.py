@@ -77,6 +77,8 @@ class EmailSender:
             logger.warning("No default sender information found in configuration.")
             self.default_sender = None
 
+        self.register_filter()
+
         self.start_worker()
 
     def start_worker(self):
@@ -101,6 +103,17 @@ class EmailSender:
             else:
                 logger.debug("No email job found in queue.")
             time.sleep(5)  # Sleep for 5 seconds before checking the queue again
+
+    def register_filter(self):
+        def format_date(value):
+            if isinstance(value, datetime):
+                return value.strftime('%Y-%m-%d')  # Change format as needed
+            
+            return value
+
+        # Register the custom filter with Jinja2
+        self._env.filters['date'] = format_date
+    
 
     def send_email(self, email_job, send=True):
         """
